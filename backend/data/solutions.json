@@ -1,0 +1,32 @@
+{
+  "kuning": {
+    "masalah": "Batang karet menguning",
+    "penyebab": "Serangan jamur atau kekurangan nutrisi",
+    "solusi": "Gunakan fungisida dan pupuk tambahan",
+    "kesimpulan": "Tingkatkan perawatan dan monitoring"
+  },
+  "hijau": {
+    "masalah": "Daun sehat",
+    "penyebab": "-",
+    "solusi": "-",
+    "kesimpulan": "Tidak ada masalah terdeteksi"
+  },
+  "biru": {
+    "masalah": "Akar kemungkinan membusuk",
+    "penyebab": "Terlalu lembap atau jamur akar",
+    "solusi": "Keringkan area dan gunakan fungisida akar",
+    "kesimpulan": "Lakukan perawatan intensif pada akar"
+  },
+  "coklat": {
+    "masalah": "Batang kering atau terserang hama",
+    "penyebab": "Kekeringan atau serangan kumbang",
+    "solusi": "Tingkatkan penyiraman dan gunakan insektisida",
+    "kesimpulan": "Perlu perawatan segera untuk mencegah kerusakan lebih lanjut"
+  },
+  "hitam": {
+    "masalah": "Jamur pada batang",
+    "penyebab": "Infeksi jamur atau bakteri",
+    "solusi": "Bersihkan area yang terinfeksi dan aplikasikan fungisida",
+    "kesimpulan": "Perlu penanganan cepat untuk mencegah penyebaran"
+  }
+}
