@@ -1,31 +1,29 @@
-version: '3.8'
-
 services:
   postgres:
-    image: postgres:14
+    image: postgres:15
     container_name: pak-khana-postgres
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: pak_khana
+      POSTGRES_DB: rubber-tree
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: always
 
-  backend:
-    build: .
-    container_name: pak-khana-backend
-    depends_on:
-      - postgres
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pak_khana
-    ports:
-      - "8000:8000"
-    volumes:
-      - .:/app
-    restart: always
+  # backend:
+  #   build: .
+  #   container_name: pak-khana-backend
+  #   depends_on:
+  #     - postgres
+  #   environment:
+  #     - DATABASE_URL=postgresql://postgres:postgres@localhost:5432/rubber-tree
+  #   ports:
+  #     - "8000:8000"
+  #   volumes:
+  #     - .:/app
+  #   restart: always
 
 volumes:
   postgres_data:
