@@ -1,7 +1,7 @@
 import tensorflow as tf
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.applications import MobileNetV2
-from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
+from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, Dropout
 from tensorflow.keras.models import Model
 import os
 import matplotlib.pyplot as plt
@@ -20,9 +20,9 @@ import numpy as np
 #       ...
 
 # Konfigurasi
-BATCH_SIZE = 16  # Mengurangi batch size karena data lebih sedikit
+BATCH_SIZE = 16
 IMG_SIZE = (224, 224)
-EPOCHS = 10  # Mengurangi jumlah epoch untuk uji coba awal
+EPOCHS = 20  # Meningkatkan jumlah epoch untuk pelatihan lebih baik
 TRAIN_DIR = "data/train"
 VAL_DIR = "data/valid"
 
@@ -34,18 +34,19 @@ if not os.path.exists(TRAIN_DIR) or not os.path.exists(VAL_DIR):
     print("Dan tambahkan gambar ke setiap folder kategori")
     exit(1)
 
-# Data augmentation untuk training
+# Data augmentation untuk training - meningkatkan variasi data
 train_datagen = ImageDataGenerator(
     rescale=1./255,
-    rotation_range=20,
+    rotation_range=30,  # Meningkatkan rotasi
     width_shift_range=0.2,
     height_shift_range=0.2,
     shear_range=0.2,
-    zoom_range=0.2,
+    zoom_range=0.3,  # Meningkatkan zoom
     horizontal_flip=True,
-    brightness_range=[0.8, 1.2],
+    vertical_flip=True,  # Menambahkan flip vertikal
+    brightness_range=[0.7, 1.3],  # Meningkatkan variasi kecerahan
     fill_mode='nearest',
-    validation_split=0.2  # Tambahkan validation split jika data validasi kurang
+    validation_split=0.2
 )
 
 # Hanya rescaling untuk validation
@@ -56,8 +57,8 @@ train_generator = train_datagen.flow_from_directory(
     TRAIN_DIR,
     target_size=IMG_SIZE,
     batch_size=BATCH_SIZE,
-    class_mode='binary',  # Ubah ke binary untuk klasifikasi biner
-    classes=['daun'],  # Hanya gunakan folder daun
+    class_mode='binary',
+    classes=['daun'],
     shuffle=True
 )
 
@@ -65,39 +66,49 @@ validation_generator = val_datagen.flow_from_directory(
     VAL_DIR,
     target_size=IMG_SIZE,
     batch_size=BATCH_SIZE,
-    class_mode='binary',  # Ubah ke binary untuk klasifikasi biner
-    classes=['daun']  # Hanya gunakan folder daun
+    class_mode='binary',
+    classes=['daun']
 )
 
-# Buat model dengan MobileNetV2 sebagai base model
+# Buat model dengan MobileNetV2 sebagai base model (lebih ringan dan efisien)
 base_model = MobileNetV2(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
 
-# Freeze base model
-for layer in base_model.layers:
+# Fine-tuning: Unfreeze beberapa layer terakhir untuk pelatihan
+for layer in base_model.layers[:-20]:  # Freeze semua layer kecuali 20 terakhir
     layer.trainable = False
 
-# Tambahkan layer klasifikasi
+# Tambahkan layer klasifikasi yang lebih kompleks
 x = base_model.output
 x = GlobalAveragePooling2D()(x)
-x = Dense(64, activation='relu')(x)  # Kurangi jumlah neuron
-x = tf.keras.layers.Dropout(0.5)(x)  # Tambahkan dropout untuk mengurangi overfitting
-predictions = Dense(1, activation='sigmoid')(x)  # 1 output untuk klasifikasi biner
+x = Dense(128, activation='relu')(x)  # Meningkatkan jumlah neuron
+x = Dropout(0.5)(x)  # Dropout untuk mengurangi overfitting
+x = Dense(64, activation='relu')(x)
+x = Dropout(0.3)(x)
+predictions = Dense(1, activation='sigmoid')(x)  # Output untuk klasifikasi biner
 
 # Model final
 model = Model(inputs=base_model.input, outputs=predictions)
 
-# Compile model
+# Compile model dengan learning rate yang lebih kecil untuk fine-tuning
 model.compile(
-    optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
-    loss='binary_crossentropy',  # Ubah ke binary crossentropy
+    optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001),
+    loss='binary_crossentropy',
     metrics=['accuracy']
 )
 
-# Callback untuk early stopping
+# Callback untuk early stopping dan model checkpoint
 early_stopping = tf.keras.callbacks.EarlyStopping(
     monitor='val_loss',
-    patience=3,  # Kurangi patience untuk uji coba awal
+    patience=5,  # Meningkatkan patience
     restore_best_weights=True
+)
+
+# Callback untuk mengurangi learning rate jika plateau
+reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(
+    monitor='val_loss',
+    factor=0.2,
+    patience=3,
+    min_lr=0.00001
 )
 
 # Train model
@@ -107,7 +118,7 @@ history = model.fit(
     epochs=EPOCHS,
     validation_data=validation_generator,
     validation_steps=max(1, validation_generator.samples // BATCH_SIZE),
-    callbacks=[early_stopping]
+    callbacks=[early_stopping, reduce_lr]
 )
 
 # Simpan model
@@ -152,9 +163,10 @@ for images, labels in validation_generator:
         predicted = "Sehat" if predictions[i] < 0.5 else "Tidak Sehat"
         true_label = "Sehat" if labels[i] < 0.5 else "Tidak Sehat"
         color = 'green' if predicted == true_label else 'red'
-        title = f"True: {true_label}\nPred: {predicted}"
+        confidence = predictions[i] if predictions[i] >= 0.5 else 1 - predictions[i]
+        title = f"True: {true_label}\nPred: {predicted}\nConf: {confidence:.2f}"
         plt.title(title, color=color)
         plt.axis('off')
     
     plt.savefig(os.path.join(os.path.dirname(__file__), 'validation_predictions.png'))
-    break  # Hanya tampilkan batch pertama
+    break  # Hanya tampilkan satu batch
