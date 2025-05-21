@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:async'; // Add this import for TimeoutException
 import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
 import '../models/diagnosis.dart';
@@ -44,14 +45,30 @@ class ApiService {
     var request = http.MultipartRequest('POST', uri);
     request.files.add(await http.MultipartFile.fromPath('file', imageFile.path));
     
-    final streamedResponse = await request.send();
-    final response = await http.Response.fromStream(streamedResponse);
-    
-    if (response.statusCode == 200) {
-      final jsonData = json.decode(response.body);
-      return Diagnosis.fromJson(jsonData);
-    } else {
-      throw Exception('Gagal menganalisis gambar: ${response.statusCode}');
+    try {
+      // Tambahkan timeout 60 detik
+      final streamedResponse = await request.send().timeout(Duration(seconds: 60));
+      final response = await http.Response.fromStream(streamedResponse);
+      
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        return Diagnosis.fromJson(jsonData);
+      } else {
+        throw Exception('Gagal menganalisis gambar: ${response.statusCode}');
+      }
+    } on TimeoutException {
+      throw Exception('Waktu analisis terlalu lama. Silakan coba lagi nanti.');
+    } catch (e) {
+      // Tangani error dengan lebih baik
+      if (e is SocketException) {
+        throw Exception('Tidak dapat terhubung ke server. Periksa koneksi internet Anda.');
+      } else if (e is HttpException) {
+        throw Exception('Tidak dapat menemukan layanan yang diminta.');
+      } else if (e is FormatException) {
+        throw Exception('Format respons tidak valid.');
+      } else {
+        throw Exception('Gagal menganalisis gambar: $e');
+      }
     }
   }
   
@@ -94,6 +111,22 @@ class ApiService {
     
     return _handleResponse(
       http.post(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(data),
+      ),
+      (json) => TreeTracking.fromJson(json),
+    );
+  }
+  
+  // Add updateTracking method
+  static Future<TreeTracking> updateTracking(TreeTracking tracking) async {
+    final uri = Uri.parse('${ApiConfig.baseUrl}${ApiConfig.trackingEndpoint}/${tracking.id}');
+    
+    final Map<String, dynamic> data = tracking.toJson();
+    
+    return _handleResponse(
+      http.put(
         uri,
         headers: {'Content-Type': 'application/json'},
         body: json.encode(data),

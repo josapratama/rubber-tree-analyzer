@@ -2,17 +2,21 @@ import 'package:intl/intl.dart';
 
 class DateFormatter {
   static String formatDate(DateTime date) {
-    return DateFormat('dd/MM/yyyy').format(date);
+    return DateFormat('dd/MMMM/yyyy, HH:mm', 'id_ID').format(date);
   }
-  
+
+  static String formatShortDate(DateTime date) {
+    return DateFormat('dd/MM', 'id_ID').format(date);
+  }
+
   static String formatDateTime(DateTime date) {
     return DateFormat('dd/MM/yyyy HH:mm').format(date);
   }
-  
+
   static String formatRelative(DateTime date) {
     final now = DateTime.now();
     final difference = now.difference(date);
-    
+
     if (difference.inDays > 365) {
       return '${(difference.inDays / 365).floor()} tahun yang lalu';
     } else if (difference.inDays > 30) {

@@ -32,7 +32,7 @@ class AppTheme {
         ),
       ),
       
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         elevation: 4,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(UIConfig.borderRadiusMedium),
@@ -48,6 +48,49 @@ class AppTheme {
         titleLarge: UIConfig.subheadingStyle,
         bodyLarge: UIConfig.bodyStyle,
         bodySmall: UIConfig.captionStyle,
+      ),
+    );
+  }
+  
+  static ThemeData get darkTheme {
+    return ThemeData.dark().copyWith(
+      primaryColor: Colors.green.shade700,
+      scaffoldBackgroundColor: Color(0xFF121212),
+      
+      appBarTheme: AppBarTheme(
+        backgroundColor: Colors.green.shade700,
+        elevation: 0,
+        centerTitle: true,
+        titleTextStyle: TextStyle(
+          fontSize: UIConfig.fontSizeXLarge,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.green.shade700,
+          foregroundColor: Colors.white,
+          padding: EdgeInsets.symmetric(
+            horizontal: UIConfig.paddingMedium,
+            vertical: UIConfig.paddingSmall,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(UIConfig.borderRadiusSmall),
+          ),
+        ),
+      ),
+      
+      cardTheme: CardThemeData(
+        elevation: 4,
+        color: Color(0xFF1E1E1E),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(UIConfig.borderRadiusMedium),
+        ),
+        margin: EdgeInsets.symmetric(
+          horizontal: UIConfig.paddingMedium,
+          vertical: UIConfig.paddingSmall,
+        ),
       ),
     );
   }
